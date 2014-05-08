@@ -492,7 +492,6 @@ function (VideoPlayer, VideoStorage, i18n) {
             __dfd__: __dfd__,
             el: el,
             container: container,
-            currentVolume: 100,
             id: id,
             isFullScreen: false,
             isTouch: isTouch,

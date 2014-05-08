@@ -74,14 +74,6 @@ function () {
             return this.video.duration;
         };
 
-        Player.prototype.mute = function () {
-            this.muted = true;
-        };
-
-        Player.prototype.unMute = function () {
-            this.muted = false;
-        };
-
         Player.prototype.setPlaybackRate = function (value) {
             var newSpeed;
 

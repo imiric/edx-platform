@@ -32,15 +32,16 @@
             });
 
             it('create the slider', function () {
-                expect($.fn.slider).toHaveBeenCalledWith({
+                expect($.fn.slider.calls[2].args).toEqual([{
                     orientation: "vertical",
                     range: "min",
                     min: 0,
                     max: 100,
-                    value: volumeControl.volume,
-                    slide: volumeControl.onSlideHandler
-                });
-                expect($.fn.slider).toHaveBeenCalledWith('value', volumeControl.volume);
+                    slide: jasmine.any(Function)
+                }]);
+                expect($.fn.slider).toHaveBeenCalledWith(
+                    'value', volumeControl.volume
+                );
             });
 
             it('add ARIA attributes to live region', function () {
@@ -63,11 +64,15 @@
                 });
             });
 
+            var assertEventBinding = function (selector, eventName) {
+                expect($(selector)).toHandle(eventName);
+            }
+
             it('bind the volume control', function () {
                 var button = $('.volume > a');
 
-                expect(button).toBeEventBinded('keydown');
-                expect(button).toBeEventBinded('mousedown');
+                assertEventBinding(button, 'keydown');
+                assertEventBinding(button, 'mousedown');
 
                 expect($('.volume')).not.toHaveClass('is-opened');
 
@@ -141,12 +146,15 @@
             it('when the new volume is in ]40,60]', function () {
                 expect(volumeControl).assertLiveRegionState(50, 'Average');
             });
+
             it('when the new volume is in ]60,80]', function () {
                 expect(volumeControl).assertLiveRegionState(70, 'Loud');
             });
+
             it('when the new volume is in ]80,100[', function () {
                 expect(volumeControl).assertLiveRegionState(90, 'Very loud');
             });
+
             it('when the new volume is Maximum', function () {
                 expect(volumeControl).assertLiveRegionState(100, 'Maximum');
             });
