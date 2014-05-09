@@ -611,3 +611,132 @@ class CapaTargetedFeedbackTest(unittest.TestCase):
         self.assertNotRegexpMatches(without_new_lines, r"<targetedfeedback explanation-id=\"feedbackC\".*solution explanation")
         self.assertRegexpMatches(without_new_lines, r"<div>\{.*'1_solution_1'.*\}</div>")
         self.assertNotRegexpMatches(without_new_lines, r"feedback1|feedback3|feedbackC")
+
+    # Two targeted-feedback questions in one problem. Used across a few tests.
+    xml_multiple = textwrap.dedent("""
+        <problem>
+        <p>Q1</p>
+        <multiplechoiceresponse targeted-feedback="">
+          <choicegroup type="MultipleChoice">
+            <choice correct="false" explanation-id="feedback1">wrong-1</choice>
+            <choice correct="false" explanation-id="feedback2">wrong-2</choice>
+            <choice correct="true" explanation-id="feedbackC">correct-1</choice>
+            <choice correct="false" explanation-id="feedback3">wrong-3</choice>
+          </choicegroup>
+        </multiplechoiceresponse>
+
+        <targetedfeedbackset>
+            <targetedfeedback explanation-id="feedback1">
+            <div class="detailed-targeted-feedback">
+                <p>Targeted Feedback</p>
+                <p>This is the 1st WRONG solution</p>
+            </div>
+            </targetedfeedback>
+
+            <targetedfeedback explanation-id="feedback3">
+            <div class="detailed-targeted-feedback">
+                <p>Targeted Feedback</p>
+                <p>This is the 3rd WRONG solution</p>
+            </div>
+            </targetedfeedback>
+
+            <targetedfeedback explanation-id="feedbackC">
+            <div class="detailed-targeted-feedback-correct">
+                <p>Targeted Feedback</p>
+                <p>Feedback on your correct solution...</p>
+            </div>
+            </targetedfeedback>
+
+        </targetedfeedbackset>
+
+        <solutionset>
+            <solution explanation-id="feedbackC">
+            <div class="detailed-solution">
+                <p>Explanation</p>
+                <p>This is the solution explanation</p>
+                <p>Not much to explain here, sorry!</p>
+            </div>
+            </solution>
+        </solutionset>
+
+        <hr/>
+
+        <p>Q2</p>
+        <multiplechoiceresponse targeted-feedback="">
+          <choicegroup type="MultipleChoice" answer-pool="3">
+            <choice correct="false" explanation-id="feedback1">wrong-1</choice>
+            <choice correct="false" explanation-id="feedback2">wrong-2</choice>
+            <choice correct="true" explanation-id="feedbackC">correct-1</choice>
+            <choice correct="false" explanation-id="feedback3">wrong-3</choice>
+          </choicegroup>
+        </multiplechoiceresponse>
+
+        <targetedfeedbackset>
+            <targetedfeedback explanation-id="feedback1">
+            <div class="detailed-targeted-feedback">
+                <p>Targeted Feedback</p>
+                <p>This is the 1st WRONG solution</p>
+            </div>
+            </targetedfeedback>
+
+            <targetedfeedback explanation-id="feedback3">
+            <div class="detailed-targeted-feedback">
+                <p>Targeted Feedback</p>
+                <p>This is the 3rd WRONG solution</p>
+            </div>
+            </targetedfeedback>
+
+            <targetedfeedback explanation-id="feedbackC">
+            <div class="detailed-targeted-feedback-correct">
+                <p>Targeted Feedback</p>
+                <p>Feedback on your correct solution...</p>
+            </div>
+            </targetedfeedback>
+
+        </targetedfeedbackset>
+
+        <solutionset>
+            <solution explanation-id="feedbackC">
+            <div class="detailed-solution">
+                <p>Explanation</p>
+                <p>This is the solution explanation</p>
+                <p>Not much to explain here, sorry!</p>
+            </div>
+            </solution>
+        </solutionset>
+    </problem>""")
+
+    def test_targeted_feedback_multiple_not_answered(self):
+        # Not answered -> empty targeted feedback
+        problem = new_loncapa_problem(self.xml_multiple)
+        the_html = problem.get_html()
+        without_new_lines = the_html.replace("\n", "")
+        self.assertRegexpMatches(without_new_lines,
+            # Q1 has nothing
+            r'<targetedfeedbackset.*?>\s*</targetedfeedbackset>.*' +
+            # Q2 has nothing
+            '<targetedfeedbackset.*?>\s*</targetedfeedbackset>')
+
+    def test_targeted_feedback_multiple_answer_1(self):
+        problem = new_loncapa_problem(self.xml_multiple)
+        problem.done = True
+        problem.student_answers = {'1_2_1': 'choice_0'}  # feedback1
+        the_html = problem.get_html()
+        without_new_lines = the_html.replace("\n", "")
+        self.assertRegexpMatches(without_new_lines,
+            # Q1 should have feedback1
+            r'<targetedfeedbackset.*?>.*?explanation-id="feedback1".*?</targetedfeedbackset>.*' +
+            # Q2 should have nothing
+            r'<targetedfeedbackset.*?>\s*</targetedfeedbackset>')
+
+    def test_targeted_feedback_multiple_answer_2(self):
+        problem = new_loncapa_problem(self.xml_multiple)
+        problem.done = True
+        problem.student_answers = {'1_2_1': 'choice_0', '1_3_1': 'mask_1'} # Q1 wrong, Q2 correct
+        the_html = problem.get_html()
+        without_new_lines = the_html.replace("\n", "")
+        self.assertRegexpMatches(without_new_lines,
+            # Q1 should have feedback1
+            r'<targetedfeedbackset.*?>.*?explanation-id="feedback1".*?</targetedfeedbackset>.*' +
+            # Q2 should have feedbackC
+            r'<targetedfeedbackset.*?>.*explanation-id="feedbackC".*?</targetedfeedbackset>')
